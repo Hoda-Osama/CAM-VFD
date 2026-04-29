@@ -1,0 +1,139 @@
+# Model Configuration
+model:
+  appearance:
+    name: "CLIP-ViT-B/32"
+    feature_dim: 512
+
+  depth:
+    name: "MiDaS-DPT-Hybrid"
+    feature_dim: 128
+    chunk_size: 4
+
+  motion:
+    name: "VideoMAE-base"
+    feature_dim: 768
+    freeze_layers: 8
+
+  fusion:
+    hidden_dim: 256
+    num_heads: 8
+    dropout: 0.5
+    num_layers: 2
+
+  # CMAD Configuration
+  cmad:
+    enabled: true
+    temperature: 1.0
+    normalize: true
+
+# Data Configuration
+data:
+  frame_count: 16
+  min_frames: 2
+  n_factor: 3
+  batch_size: 32  # Increased to 32 as specified
+  num_workers: 4
+  pin_memory: true
+
+  # Multi-dataset support
+  datasets:
+    GenVidBench:
+      enabled: true
+      fake_path: "path/to/GenVidBench/fake"
+      real_path: "path/to/GenVidBench/real"
+      split_ratio: [0.8, 0.1, 0.1]  # train, val, test
+
+    GenVideo:
+      enabled: true
+      fake_path: "path/to/GenVideo/fake"
+      real_path: "path/to/GenVideo/real"
+      split_ratio: [0.8, 0.1, 0.1]
+
+  adaptive_sampling:
+    enabled: true
+    cyclic_repetition: true
+    consecutive_segments: true
+    distributed_segments: true
+    segment_jitter: true
+
+  transforms:
+    train:
+      resize: 256
+      crop: 224
+      zoom_range: [0.7, 1.0]
+      brightness_jitter: 0.25
+      contrast_jitter: 0.25
+      saturation_jitter: 0.15
+      hue_jitter: 0.05
+      gaussian_blur: [3, 0.5]
+      random_noise: 0.02
+      random_grayscale_prob: 0.05
+    val:
+      resize: 256
+      crop: 224
+
+# Training Configuration
+training:
+  epochs: 50  # Increased to 50 as specified
+  learning_rate: 1e-5  # 1 × 10^{-5} as specified
+  weight_decay: 1e-4
+  focal_alpha: 0.75
+  focal_gamma: 2
+  gradient_clip: 1.0
+
+  scheduler:
+    type: "cosine"
+    eta_min: 1e-7
+
+  early_stopping:
+    patience: 10  # Increased to 10 as specified
+    metric: "accuracy"
+
+  mixed_precision: true
+  checkpoint_interval: 10
+
+  adaptive_augmentation:
+    enabled: true
+    start_strong_epoch: 5
+
+# Split Configuration
+split:
+  validation_split: 0.1  # 10% validation as specified
+  test_split: 0.1
+  random_state: 42
+
+# Paths
+paths:
+  checkpoints: "./checkpoints"
+  logs: "./logs"
+  results: "./results"
+  cmad_analysis: "./cmad_analysis"
+
+# Add to existing config.yaml
+robustness:
+  signal_degradation:
+    compression:
+      crf_values: [18, 28, 32]
+    noise:
+      gaussian_sigma: [0.03, 0.1]
+      salt_pepper_prob: [0.01, 0.05]
+    blur:
+      gaussian_sigma: [1, 2]
+      defocus_radius: [3, 7]
+      motion_length: [7, 21]
+
+  photometric:
+    lighting:
+      brightness_delta: [0.05, 0.1, 0.7]
+      contrast_factor: [1.3]
+    color:
+      saturation_factor: [0.7, 1.3]
+      hue_shift_degrees: [5, 12]
+
+  adversarial:
+    fgsm:
+      epsilon: [2/255, 4/255, 8/255]
+    pgd:
+      epsilon: [2/255, 4/255, 8/255]
+      iterations: 20
+      alpha: 2/255
